@@ -10,7 +10,7 @@ HOST = 'https://www.kinoafisha.info'
 FILE = 'FILMS.csv'
 
 def save_file(items, path):
-    with open(path, 'w', newline='') as  file:
+    with open(path, 'w', newline='') as file:
         writer = csv.writer(file, delimiter=';')
         writer.writerow(['Название', 'Описание', 'Рэйтинг по <<KinoAfisha>>', 'Год и страна', 'Жанр', 'Продюсер',])
         for item in items:
