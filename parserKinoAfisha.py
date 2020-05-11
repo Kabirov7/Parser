@@ -1,3 +1,4 @@
+import mysql.connector
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -9,12 +10,23 @@ HEADERS = {
 HOST = 'https://www.kinoafisha.info'
 FILE = 'FILMS.csv'
 
-def save_file(items, path):
-    with open(path, 'w', newline='') as file:
-        writer = csv.writer(file, delimiter=';')
-        writer.writerow(['Название', 'Описание', 'Рэйтинг по <<KinoAfisha>>', 'Год и страна', 'Жанр', 'Продюсер',])
-        for item in items:
-            writer.writerow([item['title'], item['link'], item['rating'], item['year_country'], item['genre'], item['producer'], ])
+# def save_file(items, path):
+#     with open(path, 'w', newline='') as file:
+#         writer = csv.writer(file, delimiter=';')
+#         writer.writerow(['Название', 'Описание', 'Рэйтинг по <<KinoAfisha>>', 'Год и страна', 'Жанр', 'Продюсер',])
+#         for item in items:
+#             writer.writerow([item['title'], item['link'], item['rating'], item['year_country'], item['genre'], item['producer'], ])
+def save_sql(items):
+    db = mysql.connector.connect(host='localhost', user='root', password='1234', database='films')
+    mycursor = db.cursor()
+    mycursor.execute('DROP TABLE topCinema')
+    mycursor.execute('CREATE TABLE topCinema(ID int PRIMARY KEY AUTO_INCREMENT, title VARCHAR(70), link VARCHAR(43), released VARCHAR(60), genre VARCHAR(60), producer VARCHAR(70))')
+
+    for i in items:
+        sqlFormula = 'INSERT INTO topCinema(title, link, released, genre, producer) VALUES (%s,%s,%s,%s,%s)'
+        films = ([i['title'],i['link'], i['year_country'],i['genre'], i['producer']])
+        mycursor.execute(sqlFormula,films)
+    db.commit()
 
 
 def get_html(url, params=None):
@@ -38,7 +50,6 @@ def get_content(html):
         films.append({
             'title': item.find('a', class_='films_name').get_text(),
             'link': HOST + item.find('a', class_='films_name').get('href'),
-            'rating': item.find('span', class_='rating_num').get_text(),
             'year_country': item.find('span', class_='films_info').get_text(),
             'genre': item.find_all('span', class_='films_info')[1].get_text(),
             'producer': item.find_all('span', class_='films_info')[-1].get_text().lstrip('\n').replace(' ', '')
@@ -57,7 +68,7 @@ def parse():
             html = get_html(URL, params={'page': page})
             films.extend(get_content(html.text))
             # films = get_content(html.text)
-        save_file(films, FILE)
+        save_sql(films)
         print(f'Получено {len(films)} фильмов')
     else:
         print('error')
